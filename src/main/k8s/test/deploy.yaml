@@ -7,8 +7,8 @@ metadata:
     app: ${APP_NAME}
 data:
   SPRING_PROFILES_ACTIVE: "test"
-  SERVER_PORT: "${CONTAINER_PORT:-8080}"
-  JAVA_TOOL_OPTIONS: "-Xms${JAVA_MIN_HEAP:-256m} -Xmx${JAVA_MAX_HEAP:-512m} -XX:+UseG1GC"
+  SERVER_PORT: "${CONTAINER_PORT}"
+  JAVA_TOOL_OPTIONS: "-Xms${JAVA_MIN_HEAP} -Xmx${JAVA_MAX_HEAP} -XX:+UseG1GC"
 ---
 apiVersion: v1
 kind: Service
@@ -18,10 +18,10 @@ metadata:
   labels:
     app: ${APP_NAME}
 spec:
-  type: ${SERVICE_TYPE:-ClusterIP}
+  type: ${SERVICE_TYPE}
   ports:
-    - port: ${SERVICE_PORT:-8080}
-      targetPort: ${CONTAINER_PORT:-8080}
+    - port: ${SERVICE_PORT}
+      targetPort: ${CONTAINER_PORT}
       protocol: TCP
       name: http
   selector:
@@ -35,12 +35,12 @@ metadata:
   labels:
     app: ${APP_NAME}
 spec:
-  replicas: ${REPLICAS:-2}
+  replicas: ${REPLICAS}
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: ${MAX_SURGE:-1}
-      maxUnavailable: ${MAX_UNAVAILABLE:-0}
+      maxSurge: ${MAX_SURGE}
+      maxUnavailable: ${MAX_UNAVAILABLE}
   selector:
     matchLabels:
       app: ${APP_NAME}
@@ -51,7 +51,7 @@ spec:
         version: ${IMAGE_TAG}
     spec:
       imagePullSecrets:
-        - name: docker-secret
+        - name: ${IMAGE_PULL_SECRETS}
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -68,9 +68,9 @@ spec:
       containers:
         - name: ${APP_NAME}
           image: ${CI_REGISTRY_FULL_IMAGE}
-          imagePullPolicy: ${IMAGE_PULL_POLICY:-Always}
+          imagePullPolicy: ${IMAGE_PULL_POLICY}
           ports:
-            - containerPort: ${CONTAINER_PORT:-8080}
+            - containerPort: ${CONTAINER_PORT}
               name: http
               protocol: TCP
           envFrom:
@@ -87,24 +87,24 @@ spec:
                   fieldPath: status.podIP
           resources:
             requests:
-              memory: ${MEMORY_REQUEST:-256Mi}
-              cpu: ${CPU_REQUEST:-200m}
+              memory: ${MEMORY_REQUEST}
+              cpu: ${CPU_REQUEST}
             limits:
-              memory: ${MEMORY_LIMIT:-512Mi}
-              cpu: ${CPU_LIMIT:-1000m}
+              memory: ${MEMORY_LIMIT}
+              cpu: ${CPU_LIMIT}
           livenessProbe:
             httpGet:
-              path: ${HEALTH_CHECK_PATH:-/health}
-              port: ${CONTAINER_PORT:-8080}
-            initialDelaySeconds: ${LIVENESS_INITIAL_DELAY:-60}
+              path: ${HEALTH_CHECK_PATH}
+              port: ${CONTAINER_PORT}
+            initialDelaySeconds: ${LIVENESS_INITIAL_DELAY}
             periodSeconds: 10
             failureThreshold: 3
             successThreshold: 1
           readinessProbe:
             httpGet:
-              path: ${HEALTH_CHECK_PATH:-/health}
-              port: ${CONTAINER_PORT:-8080}
-            initialDelaySeconds: ${READINESS_INITIAL_DELAY:-30}
+              path: ${HEALTH_CHECK_PATH}
+              port: ${CONTAINER_PORT}
+            initialDelaySeconds: ${READINESS_INITIAL_DELAY}
             periodSeconds: 5
             failureThreshold: 3
             successThreshold: 1
@@ -119,24 +119,24 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: ${APP_NAME}
-  minReplicas: ${HPA_MIN_REPLICAS:-2}
-  maxReplicas: ${HPA_MAX_REPLICAS:-6}
+  minReplicas: ${HPA_MIN_REPLICAS}
+  maxReplicas: ${HPA_MAX_REPLICAS}
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: ${HPA_CPU_THRESHOLD:-70}
+          averageUtilization: ${HPA_CPU_THRESHOLD}
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
-          averageUtilization: ${HPA_MEMORY_THRESHOLD:-80}
+          averageUtilization: ${HPA_MEMORY_THRESHOLD}
   behavior:
     scaleDown:
-      stabilizationWindowSeconds: ${HPA_SCALE_DOWN_WINDOW:-300}
+      stabilizationWindowSeconds: ${HPA_SCALE_DOWN_WINDOW}
       policies:
         - type: Percent
           value: 10
