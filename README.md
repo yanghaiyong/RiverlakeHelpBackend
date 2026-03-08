@@ -43,6 +43,9 @@ git push -uf origin master
 git remote add gitlab <gitlab-repo-url>
 git push gitlab +master:master --force
 
+# 同时推送到多个远程仓库
+git push origin master && git push gitlab master
+
 # 推送所有分支
 git push gitlab --all --force
 ```
@@ -112,7 +115,16 @@ kubectl apply -f src/main/k8s/dev/riverlake-help-backend.yaml
 | `CI_REGISTRY` | Docker Registry 地址 |
 | `CI_REGISTRY_USER` | 仓库用户名 |
 | `CI_REGISTRY_PASSWORD` | 仓库密码 |
+| `KUBECONFIG_CONTEXT` | K8s Context 名称 |
 | `KUBECONFIG_CONTENT` | Base64 编码的 kubeconfig |
+
+#### 获取 KUBECONFIG_CONTEXT
+
+```bash
+kubectl config get-contexts
+```
+
+获取的值为 context 名称，如 `kubernetes-admin@kubernetes`
 
 ## 许可证
 
