@@ -12,7 +12,7 @@
     </parent>
     
     <groupId>com.riverlake</groupId>
-    <artifactId>riverlake-help-backend</artifactId>
+    <artifactId>RiverlakeHelpBackend</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
     <name>RiverLake Help Backend</name>
