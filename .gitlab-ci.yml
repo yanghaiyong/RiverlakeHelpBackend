@@ -7,5 +7,7 @@ variables:
   DOCKERFILE_PATH: "src/main/docker/Dockerfile"
   CI_REGISTRY_IMAGE: "riverlake-help-backend"
   APP_NAME: "riverlake-help-backend"
-  K8S_YAML: "src/main/k8s/dev/deploy.yaml"
+  K8S_BASE_PATH: "src/main/k8s"
+  K8S_ENV: "dev"
+  K8S_FILE: "deploy.yaml"
   K8S_NAMESPACE: "app-dev"
