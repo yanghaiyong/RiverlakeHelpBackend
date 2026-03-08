@@ -1,0 +1,142 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${APP_NAME}
+  namespace: ${K8S_NAMESPACE}
+  labels:
+    app: ${APP_NAME}
+data:
+  SPRING_PROFILES_ACTIVE: "pre-prod"
+  SERVER_PORT: "${CONTAINER_PORT:-8080}"
+  JAVA_TOOL_OPTIONS: "-Xms${JAVA_MIN_HEAP:-512m} -Xmx${JAVA_MAX_HEAP:-1024m} -XX:+UseG1GC"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${APP_NAME}
+  namespace: ${K8S_NAMESPACE}
+  labels:
+    app: ${APP_NAME}
+spec:
+  type: ${SERVICE_TYPE:-ClusterIP}
+  ports:
+    - port: ${SERVICE_PORT:-8080}
+      targetPort: ${CONTAINER_PORT:-8080}
+      protocol: TCP
+      name: http
+  selector:
+    app: ${APP_NAME}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${APP_NAME}
+  namespace: ${K8S_NAMESPACE}
+  labels:
+    app: ${APP_NAME}
+spec:
+  replicas: ${REPLICAS:-3}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: ${MAX_SURGE:-1}
+      maxUnavailable: ${MAX_UNAVAILABLE:-0}
+  selector:
+    matchLabels:
+      app: ${APP_NAME}
+  template:
+    metadata:
+      labels:
+        app: ${APP_NAME}
+        version: ${IMAGE_TAG:-latest}
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: ${APP_NAME}
+                topologyKey: kubernetes.io/hostname
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: ${APP_NAME}
+          image: ${CI_REGISTRY_FULL_IMAGE}
+          imagePullPolicy: ${IMAGE_PULL_POLICY:-Always}
+          ports:
+            - containerPort: ${CONTAINER_PORT:-8080}
+              name: http
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: ${APP_NAME}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          resources:
+            requests:
+              memory: ${MEMORY_REQUEST:-512Mi}
+              cpu: ${CPU_REQUEST:-500m}
+            limits:
+              memory: ${MEMORY_LIMIT:-1024Mi}
+              cpu: ${CPU_LIMIT:-2000m}
+          startupProbe:
+            httpGet:
+              path: ${HEALTH_CHECK_PATH:-/health}
+              port: ${CONTAINER_PORT:-8080}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: ${HEALTH_CHECK_PATH:-/health}
+              port: ${CONTAINER_PORT:-8080}
+            initialDelaySeconds: ${LIVENESS_INITIAL_DELAY:-60}
+            periodSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: ${HEALTH_CHECK_PATH:-/health}
+              port: ${CONTAINER_PORT:-8080}
+            initialDelaySeconds: ${READINESS_INITIAL_DELAY:-30}
+            periodSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ${APP_NAME}
+  namespace: ${K8S_NAMESPACE}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ${APP_NAME}
+  minReplicas: ${HPA_MIN_REPLICAS:-2}
+  maxReplicas: ${HPA_MAX_REPLICAS:-6}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: ${HPA_CPU_THRESHOLD:-70}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: ${HPA_MEMORY_THRESHOLD:-80}

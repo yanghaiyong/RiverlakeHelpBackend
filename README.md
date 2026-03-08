@@ -46,7 +46,7 @@ mvn spring-boot:run
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | /api/hello | 测试接口 |
+| GET | /health | 测试接口 |
 | POST | /api/echo | 回显接口 |
 
 ## 部署说明

@@ -1,40 +1,11 @@
 include:
   - project: 'cidevops/java-cicd-template'
     ref: master
-    file: 'templates/java-pipeline.yaml'
+    file: 'templates/common-java-pipeline.yaml'
 
 variables:
-  MAVEN_IMAGE: "maven:3.9.4-eclipse-temurin-17"
-  DOCKER_IMAGE: "docker:cli"
-  KUBECTL_IMAGE: "bitnami/kubectl:latest"
-  
-  BUILD_SHELL: "mvn clean package -B -DskipTests -f pom.xml"
-  TEST_SHELL: "mvn test -B -f pom.xml"
-  ARTIFACTS: "target/"
-  CACHE_DIR: "target/"
-  
-  CI_REGISTRY: "k8s-node-1:5000"
-  CI_REGISTRY_IMAGE: "riverlake-help-backend"
   DOCKERFILE_PATH: "src/main/docker/Dockerfile"
-  
+  CI_REGISTRY_IMAGE: "riverlake-help-backend"
   APP_NAME: "riverlake-help-backend"
-  K8S_NAMESPACE: "default"
-  K8S_YAML: "src/main/k8s/dev/riverlake-help-backend.yaml"
-
-stages:
-  - package
-  - test
-  - build
-  - deploy
-
-mvn_build:
-  extends: .mvn_build
-
-test:
-  extends: .test
-
-docker_upload:
-  extends: .docker_upload
-
-k8s_deploy:
-  extends: .k8s_deploy
+  K8S_YAML: "src/main/k8s/dev/deploy.yaml"
+  K8S_NAMESPACE: "app-dev"
