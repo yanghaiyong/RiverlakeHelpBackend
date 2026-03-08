@@ -28,6 +28,32 @@ src/
 └── pom.xml
 ```
 
+## Git 配置
+
+### 首次推送到远程仓库
+
+```bash
+# 方法一：使用 origin 作为远程仓库名（推荐）
+cd existing_repo
+git remote add origin https://gitlab-ui.test.com/develop/RiverlakeHelpBackend.git
+git branch -M master
+git push -uf origin master
+
+# 方法二：使用其他远程仓库名（如 gitlab）
+git remote add gitlab <gitlab-repo-url>
+git push gitlab +master:master --force
+
+# 推送所有分支
+git push gitlab --all --force
+```
+
+### 查看远程仓库
+
+```bash
+git remote -v
+git branch -a
+```
+
 ## 快速开始
 
 ### 本地开发
