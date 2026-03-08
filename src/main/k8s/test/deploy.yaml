@@ -7,8 +7,8 @@ metadata:
     app: ${APP_NAME}
 data:
   SPRING_PROFILES_ACTIVE: "test"
-  SERVER_PORT: "${CONTAINER_PORT}}"
-  JAVA_TOOL_OPTIONS: "-Xms${JAVA_MIN_HEAP}} -Xmx${JAVA_MAX_HEAP}} -XX:+UseG1GC"
+  SERVER_PORT: "${CONTAINER_PORT:-8080}"
+  JAVA_TOOL_OPTIONS: "-Xms${JAVA_MIN_HEAP:-256m} -Xmx${JAVA_MAX_HEAP:-512m} -XX:+UseG1GC"
 ---
 apiVersion: v1
 kind: Service
@@ -18,10 +18,10 @@ metadata:
   labels:
     app: ${APP_NAME}
 spec:
-  type: ${SERVICE_TYPE}}
+  type: ${SERVICE_TYPE:-ClusterIP}
   ports:
-    - port: ${SERVICE_PORT}}
-      targetPort: ${CONTAINER_PORT}}
+    - port: ${SERVICE_PORT:-8080}
+      targetPort: ${CONTAINER_PORT:-8080}
       protocol: TCP
       name: http
   selector:
@@ -35,12 +35,12 @@ metadata:
   labels:
     app: ${APP_NAME}
 spec:
-  replicas: ${REPLICAS}}
+  replicas: ${REPLICAS:-2}
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: ${MAX_SURGE}}
-      maxUnavailable: ${MAX_UNAVAILABLE}}
+      maxSurge: ${MAX_SURGE:-1}
+      maxUnavailable: ${MAX_UNAVAILABLE:-0}
   selector:
     matchLabels:
       app: ${APP_NAME}
@@ -48,8 +48,10 @@ spec:
     metadata:
       labels:
         app: ${APP_NAME}
-        version: ${IMAGE_TAG}}
+        version: ${IMAGE_TAG}
     spec:
+      imagePullSecrets:
+        - name: docker-secret
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -66,9 +68,9 @@ spec:
       containers:
         - name: ${APP_NAME}
           image: ${CI_REGISTRY_FULL_IMAGE}
-          imagePullPolicy: ${IMAGE_PULL_POLICY}}
+          imagePullPolicy: ${IMAGE_PULL_POLICY:-Always}
           ports:
-            - containerPort: ${CONTAINER_PORT}}
+            - containerPort: ${CONTAINER_PORT:-8080}
               name: http
               protocol: TCP
           envFrom:
@@ -85,24 +87,24 @@ spec:
                   fieldPath: status.podIP
           resources:
             requests:
-              memory: ${MEMORY_REQUEST}}
-              cpu: ${CPU_REQUEST}}
+              memory: ${MEMORY_REQUEST:-256Mi}
+              cpu: ${CPU_REQUEST:-200m}
             limits:
-              memory: ${MEMORY_LIMIT}}
-              cpu: ${CPU_LIMIT}}
+              memory: ${MEMORY_LIMIT:-512Mi}
+              cpu: ${CPU_LIMIT:-1000m}
           livenessProbe:
             httpGet:
-              path: ${HEALTH_CHECK_PATH}}
-              port: ${CONTAINER_PORT}}
-            initialDelaySeconds: ${LIVENESS_INITIAL_DELAY}}
+              path: ${HEALTH_CHECK_PATH:-/health}
+              port: ${CONTAINER_PORT:-8080}
+            initialDelaySeconds: ${LIVENESS_INITIAL_DELAY:-60}
             periodSeconds: 10
             failureThreshold: 3
             successThreshold: 1
           readinessProbe:
             httpGet:
-              path: ${HEALTH_CHECK_PATH}}
-              port: ${CONTAINER_PORT}}
-            initialDelaySeconds: ${READINESS_INITIAL_DELAY}}
+              path: ${HEALTH_CHECK_PATH:-/health}
+              port: ${CONTAINER_PORT:-8080}
+            initialDelaySeconds: ${READINESS_INITIAL_DELAY:-30}
             periodSeconds: 5
             failureThreshold: 3
             successThreshold: 1
@@ -117,24 +119,24 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: ${APP_NAME}
-  minReplicas: ${HPA_MIN_REPLICAS}}
-  maxReplicas: ${HPA_MAX_REPLICAS}}
+  minReplicas: ${HPA_MIN_REPLICAS:-2}
+  maxReplicas: ${HPA_MAX_REPLICAS:-6}
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: ${HPA_CPU_THRESHOLD}}
+          averageUtilization: ${HPA_CPU_THRESHOLD:-70}
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
-          averageUtilization: ${HPA_MEMORY_THRESHOLD}}
+          averageUtilization: ${HPA_MEMORY_THRESHOLD:-80}
   behavior:
     scaleDown:
-      stabilizationWindowSeconds: ${HPA_SCALE_DOWN_WINDOW}}
+      stabilizationWindowSeconds: ${HPA_SCALE_DOWN_WINDOW:-300}
       policies:
         - type: Percent
           value: 10
