@@ -4,15 +4,17 @@ include:
     file: 'templates/common-java-pipeline.yaml'
 
 variables:
+  # Docker 配置
   DOCKERFILE_PATH: "src/main/docker/Dockerfile"
   CI_REGISTRY_IMAGE: "riverlake-help-backend"
+  
+  # K8s 部署配置
   APP_NAME: "riverlake-help-backend"
   K8S_BASE_PATH: "src/main/k8s"
-  K8S_ENV: "dev"
   K8S_FILE: "deploy.yaml"
   K8S_NAMESPACE: "app-dev"
   
-  # 资源配置（增加以减少 HPA 触发）
+  # 资源配置（覆盖模板默认值，减少 HPA 触发）
   MEMORY_REQUEST: "1Gi"
   MEMORY_LIMIT: "2Gi"
   CPU_REQUEST: "1000m"
