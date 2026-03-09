@@ -70,6 +70,8 @@ spec:
                   matchLabels:
                     app: ${APP_NAME}
                 topologyKey: kubernetes.io/hostname
+      nodeSelector:
+        "kubernetes.io/hostname": k8s-node-1
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
