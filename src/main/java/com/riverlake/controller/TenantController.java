@@ -1,5 +1,6 @@
 package com.riverlake.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -10,48 +11,55 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 public class TenantController {
 
-    private static final Map<String, Map<String, Object>> TENANT_CONFIGS = new HashMap<>();
+    private static final Map<String, TenantConfig> TENANT_CONFIGS = new HashMap<>();
 
     static {
-        Map<String, Object> tenant1 = new HashMap<>();
-        tenant1.put("tenantId", "tenant1");
-        tenant1.put("tenantName", "租户A公司");
-        tenant1.put("apiBaseUrl", "/api");
-        tenant1.put("appTitle", "租户A系统");
-        tenant1.put("themeColor", "#1890ff");
-        tenant1.put("logo", "/logo-tenant1.png");
-        TENANT_CONFIGS.put("tenant1.test.com", tenant1);
-
-        Map<String, Object> tenant2 = new HashMap<>();
-        tenant2.put("tenantId", "tenant2");
-        tenant2.put("tenantName", "租户B公司");
-        tenant2.put("apiBaseUrl", "/api");
-        tenant2.put("appTitle", "租户B系统");
-        tenant2.put("themeColor", "#52c41a");
-        tenant2.put("logo", "/logo-tenant2.png");
-        TENANT_CONFIGS.put("tenant2.test.com", tenant2);
-
-        Map<String, Object> defaultTenant = new HashMap<>();
-        defaultTenant.put("tenantId", "default");
-        defaultTenant.put("tenantName", "默认租户");
-        defaultTenant.put("apiBaseUrl", "/api");
-        defaultTenant.put("appTitle", "RiverLake Help");
-        defaultTenant.put("themeColor", "#1890ff");
-        defaultTenant.put("logo", "/logo-default.png");
-        TENANT_CONFIGS.put("default", defaultTenant);
+        TENANT_CONFIGS.put("tenant1.test.com", new TenantConfig("tenant1", "租户A公司", "/api", "租户A系统", "#1890ff", "/logo-tenant1.png"));
+        TENANT_CONFIGS.put("tenant2.test.com", new TenantConfig("tenant2", "租户B公司", "/api", "租户B系统", "#52c41a", "/logo-tenant2.png"));
+        TENANT_CONFIGS.put("default", new TenantConfig("default", "默认租户", "/api", "RiverLake Help", "#1890ff", "/logo-default.png"));
     }
 
-    @GetMapping(value = "/tenant-config", produces = "application/json")
-    public Map<String, Object> getTenantConfig(@RequestHeader(value = "Host", required = false) String host) {
-        Map<String, Object> config = TENANT_CONFIGS.getOrDefault(host, TENANT_CONFIGS.get("default"));
-        
-        Map<String, Object> result = new HashMap<>(config);
-        result.put("timestamp", System.currentTimeMillis());
-        return result;
+    @GetMapping("/tenant-config")
+    public ResponseEntity<TenantConfig> getTenantConfig(@RequestHeader(value = "Host", required = false) String host) {
+        TenantConfig config = TENANT_CONFIGS.getOrDefault(host, TENANT_CONFIGS.get("default"));
+        return ResponseEntity.ok(config);
     }
 
-    @GetMapping(value = "/tenants", produces = "application/json")
-    public Map<String, Map<String, Object>> getAllTenants() {
-        return TENANT_CONFIGS;
+    @GetMapping("/tenants")
+    public ResponseEntity<Map<String, TenantConfig>> getAllTenants() {
+        return ResponseEntity.ok(TENANT_CONFIGS);
+    }
+
+    public static class TenantConfig {
+        private String tenantId;
+        private String tenantName;
+        private String apiBaseUrl;
+        private String appTitle;
+        private String themeColor;
+        private String logo;
+
+        public TenantConfig() {}
+
+        public TenantConfig(String tenantId, String tenantName, String apiBaseUrl, String appTitle, String themeColor, String logo) {
+            this.tenantId = tenantId;
+            this.tenantName = tenantName;
+            this.apiBaseUrl = apiBaseUrl;
+            this.appTitle = appTitle;
+            this.themeColor = themeColor;
+            this.logo = logo;
+        }
+
+        public String getTenantId() { return tenantId; }
+        public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public String getTenantName() { return tenantName; }
+        public void setTenantName(String tenantName) { this.tenantName = tenantName; }
+        public String getApiBaseUrl() { return apiBaseUrl; }
+        public void setApiBaseUrl(String apiBaseUrl) { this.apiBaseUrl = apiBaseUrl; }
+        public String getAppTitle() { return appTitle; }
+        public void setAppTitle(String appTitle) { this.appTitle = appTitle; }
+        public String getThemeColor() { return themeColor; }
+        public void setThemeColor(String themeColor) { this.themeColor = themeColor; }
+        public String getLogo() { return logo; }
+        public void setLogo(String logo) { this.logo = logo; }
     }
 }
