@@ -41,7 +41,7 @@ public class TenantController {
         TENANT_CONFIGS.put("default", defaultTenant);
     }
 
-    @GetMapping("/tenant-config")
+    @GetMapping(value = "/tenant-config", produces = "application/json")
     public Map<String, Object> getTenantConfig(@RequestHeader(value = "Host", required = false) String host) {
         Map<String, Object> config = TENANT_CONFIGS.getOrDefault(host, TENANT_CONFIGS.get("default"));
         
@@ -50,7 +50,7 @@ public class TenantController {
         return result;
     }
 
-    @GetMapping("/tenants")
+    @GetMapping(value = "/tenants", produces = "application/json")
     public Map<String, Map<String, Object>> getAllTenants() {
         return TENANT_CONFIGS;
     }
